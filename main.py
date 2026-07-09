@@ -24,17 +24,17 @@ class HRForm(StatesGroup):
     algo = State()
     contact = State()
 
+# --- МЕНЮ ---
 def get_main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="ℹ️ Про бота та вакансію", callback_data="about")],
         [InlineKeyboardButton(text="📩 Надіслати заявку", callback_data="apply")]
     ])
 
-# --- ЛОГІКА ---
+# --- ЛОГІКА СТАРТУ ---
 @dp.message(Command("start"))
 async def start(message: types.Message):
     user = message.from_user
-    # Використовуємо full_name, щоб завжди бачити ім'я людини
     await bot.send_message(ADMIN_ID, f"👤 <b>Новий візит:</b> {user.full_name} (ID: {user.id})", parse_mode='HTML')
     
     text = (
@@ -49,6 +49,7 @@ async def start(message: types.Message):
     )
     await message.answer(text, reply_markup=get_main_menu(), parse_mode='HTML')
 
+# --- ІНФО ---
 @dp.callback_query(F.data == "about")
 async def about(call: types.CallbackQuery):
     text = (
@@ -67,7 +68,7 @@ async def about(call: types.CallbackQuery):
 async def back(call: types.CallbackQuery):
     await call.message.edit_text("👋 <b>Вітаю! Я — HR менеджер агенції Rost Reviews.</b>\n\nОберіть дію:", reply_markup=get_main_menu(), parse_mode='HTML')
 
-# --- АНКЕТА ---
+# --- АНКЕТА (ПОВНИЙ ФУНКЦІОНАЛ) ---
 @dp.callback_query(F.data == "apply")
 async def start_apply(call: types.CallbackQuery, state: FSMContext):
     msg = await call.message.answer("📝 <b>Питання 1/6</b>\nЯкий у вас досвід роботи у сфері відгуків?", parse_mode='HTML')
@@ -108,13 +109,12 @@ async def q5(msg: types.Message, state: FSMContext):
 @dp.message(HRForm.algo)
 async def q6(msg: types.Message, state: FSMContext):
     await state.update_data(algo=msg.text)
-    await ask_next(msg, state, HRForm.contact, "Ваш контактний Telegram (username):", 6)
+    await ask_next(msg, state, HRForm.contact, "Ваш контактний Telegram або номер телефону:", 6)
 
 @dp.message(HRForm.contact)
 async def finish(msg: types.Message, state: FSMContext):
     data = await state.get_data()
     user = msg.from_user
-    
     report = (f"📩 <b>Нова анкета кандидата</b>\n\n"
               f"👤 Користувач: {user.full_name} (ID: {user.id})\n"
               f"🔸 Досвід: {data['exp']}\n🔸 Обсяг: {data['amount']}\n"
