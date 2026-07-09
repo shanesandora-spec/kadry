@@ -150,7 +150,14 @@ async def reject(call: types.CallbackQuery):
     except: pass
     await call.answer("Відмовлено!")
 
+# Замініть цей блок у вашому main.py
 if __name__ == "__main__":
     app = Flask(__name__)
+
+    # Додаємо цей маршрут, щоб пінгер отримував відповідь 200 OK
+    @app.route('/')
+    def index():
+        return "Bot is alive!", 200
+
     Thread(target=lambda: app.run(host='0.0.0.0', port=10000), daemon=True).start()
     asyncio.run(dp.start_polling(bot))
